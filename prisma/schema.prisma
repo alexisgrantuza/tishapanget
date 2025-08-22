@@ -1,0 +1,331 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enums
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  OBSERVER
+}
+
+enum ActivityType {
+  BOARD_CREATED
+  BOARD_UPDATED
+  LIST_CREATED
+  LIST_UPDATED
+  LIST_MOVED
+  CARD_CREATED
+  CARD_UPDATED
+  CARD_MOVED
+  CARD_ARCHIVED
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  COMMENT_ADDED
+  ATTACHMENT_ADDED
+  DUE_DATE_SET
+  LABEL_ADDED
+  CHECKLIST_ADDED
+}
+
+enum CardPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RecordStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+// Core Models
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  firstName String
+  lastName  String
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Board relationships
+  ownedBoards     Board[]        @relation("BoardOwner")
+  boardMembers    BoardMember[]
+  
+  // Card relationships
+  assignedCards   CardMember[]
+  createdCards    Card[]         @relation("CardCreator")
+  
+  // Activity and comments
+  activities      Activity[]
+  comments        Comment[]
+  
+  // Checklist items
+  completedItems  ChecklistItem[] @relation("ItemCompletedBy")
+
+  @@map("users")
+}
+
+model Board {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  color       String      @default("#0079BF")
+  isPrivate   Boolean     @default(false)
+  ownerId     String
+  status      RecordStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relationships
+  owner       User          @relation("BoardOwner", fields: [ownerId], references: [id])
+  members     BoardMember[]
+  lists       List[]
+  labels      Label[]
+  activities  Activity[]
+
+  @@map("boards")
+}
+
+model BoardMember {
+  id       String     @id @default(cuid())
+  boardId  String
+  userId   String
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  // Relationships
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@map("board_members")
+}
+
+model List {
+  id        String       @id @default(cuid())
+  name      String
+  position  Float        // For drag & drop ordering
+  boardId   String
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relationships
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@map("lists")
+}
+
+model Card {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  position    Float         // For drag & drop ordering within list
+  listId      String
+  creatorId   String
+  priority    CardPriority? 
+  dueDate     DateTime?
+  isArchived  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relationships
+  list        List           @relation(fields: [listId], references: [id], onDelete: Cascade)
+  creator     User           @relation("CardCreator", fields: [creatorId], references: [id])
+  members     CardMember[]
+  labels      CardLabel[]
+  checklists  Checklist[]
+  attachments Attachment[]
+  comments    Comment[]
+  activities  Activity[]
+
+  @@map("cards")
+}
+
+model CardMember {
+  id     String @id @default(cuid())
+  cardId String
+  userId String
+
+  // Relationships
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, userId])
+  @@map("card_members")
+}
+
+model Label {
+  id      String @id @default(cuid())
+  name    String
+  color   String @default("#61BD4F")
+  boardId String
+
+  // Relationships
+  board Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards CardLabel[]
+
+  @@map("labels")
+}
+
+model CardLabel {
+  id      String @id @default(cuid())
+  cardId  String
+  labelId String
+
+  // Relationships
+  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, labelId])
+  @@map("card_labels")
+}
+
+model Checklist {
+  id        String @id @default(cuid())
+  title     String
+  position  Float  @default(0)
+  cardId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  card  Card            @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  items ChecklistItem[]
+
+  @@map("checklists")
+}
+
+model ChecklistItem {
+  id           String    @id @default(cuid())
+  text         String
+  isCompleted  Boolean   @default(false)
+  position     Float     @default(0)
+  checklistId  String
+  completedBy  String?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relationships
+  checklist     Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  completedUser User?     @relation("ItemCompletedBy", fields: [completedBy], references: [id])
+
+  @@map("checklist_items")
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  mimeType  String?
+  size      Int?
+  cardId    String
+  uploadedAt DateTime @default(now())
+
+  // Relationships
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  cardId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  type      ActivityType
+  data      Json         // Store activity-specific data as JSON
+  boardId   String
+  cardId    String?      // Optional - not all activities are card-specific
+  userId    String
+  createdAt DateTime     @default(now())
+
+  // Relationships
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  card  Card? @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model AuthUser {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("auth_users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}

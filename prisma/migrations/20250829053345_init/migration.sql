@@ -1,25 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `title` on the `boards` table. All the data in the column will be lost.
-  - You are about to drop the column `title` on the `lists` table. All the data in the column will be lost.
-  - You are about to drop the column `email_verified` on the `users` table. All the data in the column will be lost.
-  - You are about to drop the column `image` on the `users` table. All the data in the column will be lost.
-  - You are about to drop the column `name` on the `users` table. All the data in the column will be lost.
-  - You are about to drop the `_TagToTask` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `tags` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `tasks` table. If the table is not empty, all the data it contains will be lost.
-  - A unique constraint covering the columns `[username]` on the table `users` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `name` to the `boards` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `ownerId` to the `boards` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `name` to the `lists` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `firstName` to the `users` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `lastName` to the `users` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `updatedAt` to the `users` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `username` to the `users` table without a default value. This is not possible if the table is not empty.
-  - Made the column `email` on table `users` required. This step will fail if there are existing NULL values in that column.
-
-*/
 -- CreateEnum
 CREATE TYPE "public"."MemberRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'OBSERVER');
 
@@ -32,58 +10,35 @@ CREATE TYPE "public"."CardPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
 -- CreateEnum
 CREATE TYPE "public"."RecordStatus" AS ENUM ('ACTIVE', 'ARCHIVED', 'DELETED');
 
--- DropForeignKey
-ALTER TABLE "public"."_TagToTask" DROP CONSTRAINT "_TagToTask_A_fkey";
+-- CreateTable
+CREATE TABLE "public"."users" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
+    "avatar" TEXT,
+    "bio" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
--- DropForeignKey
-ALTER TABLE "public"."_TagToTask" DROP CONSTRAINT "_TagToTask_B_fkey";
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
 
--- DropForeignKey
-ALTER TABLE "public"."accounts" DROP CONSTRAINT "accounts_user_id_fkey";
+-- CreateTable
+CREATE TABLE "public"."boards" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "color" TEXT NOT NULL DEFAULT '#0079BF',
+    "isPrivate" BOOLEAN NOT NULL DEFAULT false,
+    "ownerId" TEXT NOT NULL,
+    "status" "public"."RecordStatus" NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
--- DropForeignKey
-ALTER TABLE "public"."sessions" DROP CONSTRAINT "sessions_user_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "public"."tasks" DROP CONSTRAINT "tasks_listId_fkey";
-
--- AlterTable
-ALTER TABLE "public"."boards" DROP COLUMN "title",
-ADD COLUMN     "isPrivate" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "name" TEXT NOT NULL,
-ADD COLUMN     "ownerId" TEXT NOT NULL,
-ADD COLUMN     "status" "public"."RecordStatus" NOT NULL DEFAULT 'ACTIVE',
-ALTER COLUMN "color" SET DEFAULT '#0079BF';
-
--- AlterTable
-ALTER TABLE "public"."lists" DROP COLUMN "title",
-ADD COLUMN     "name" TEXT NOT NULL,
-ADD COLUMN     "status" "public"."RecordStatus" NOT NULL DEFAULT 'ACTIVE';
-
--- AlterTable
-ALTER TABLE "public"."users" DROP COLUMN "email_verified",
-DROP COLUMN "image",
-DROP COLUMN "name",
-ADD COLUMN     "avatar" TEXT,
-ADD COLUMN     "bio" TEXT,
-ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "firstName" TEXT NOT NULL,
-ADD COLUMN     "lastName" TEXT NOT NULL,
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL,
-ADD COLUMN     "username" TEXT NOT NULL,
-ALTER COLUMN "email" SET NOT NULL;
-
--- DropTable
-DROP TABLE "public"."_TagToTask";
-
--- DropTable
-DROP TABLE "public"."tags";
-
--- DropTable
-DROP TABLE "public"."tasks";
-
--- DropEnum
-DROP TYPE "public"."Priority";
+    CONSTRAINT "boards_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "public"."board_members" (
@@ -94,6 +49,19 @@ CREATE TABLE "public"."board_members" (
     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "board_members_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."lists" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "position" DOUBLE PRECISION NOT NULL,
+    "boardId" TEXT NOT NULL,
+    "status" "public"."RecordStatus" NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "lists_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -207,15 +175,45 @@ CREATE TABLE "public"."activities" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."auth_users" (
+CREATE TABLE "public"."accounts" (
     "id" TEXT NOT NULL,
-    "name" TEXT,
-    "email" TEXT,
-    "email_verified" TIMESTAMP(3),
-    "image" TEXT,
+    "user_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "provider_account_id" TEXT NOT NULL,
+    "refresh_token" TEXT,
+    "access_token" TEXT,
+    "expires_at" INTEGER,
+    "token_type" TEXT,
+    "scope" TEXT,
+    "id_token" TEXT,
+    "session_state" TEXT,
 
-    CONSTRAINT "auth_users_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateTable
+CREATE TABLE "public"."sessions" (
+    "id" TEXT NOT NULL,
+    "session_token" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."verification_tokens" (
+    "identifier" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_username_key" ON "public"."users"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "board_members_boardId_userId_key" ON "public"."board_members"("boardId", "userId");
@@ -227,10 +225,13 @@ CREATE UNIQUE INDEX "card_members_cardId_userId_key" ON "public"."card_members"(
 CREATE UNIQUE INDEX "card_labels_cardId_labelId_key" ON "public"."card_labels"("cardId", "labelId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "auth_users_email_key" ON "public"."auth_users"("email");
+CREATE UNIQUE INDEX "accounts_provider_provider_account_id_key" ON "public"."accounts"("provider", "provider_account_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_username_key" ON "public"."users"("username");
+CREATE UNIQUE INDEX "sessions_session_token_key" ON "public"."sessions"("session_token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "public"."verification_tokens"("identifier", "token");
 
 -- AddForeignKey
 ALTER TABLE "public"."boards" ADD CONSTRAINT "boards_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "public"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -240,6 +241,9 @@ ALTER TABLE "public"."board_members" ADD CONSTRAINT "board_members_boardId_fkey"
 
 -- AddForeignKey
 ALTER TABLE "public"."board_members" ADD CONSTRAINT "board_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."lists" ADD CONSTRAINT "lists_boardId_fkey" FOREIGN KEY ("boardId") REFERENCES "public"."boards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."cards" ADD CONSTRAINT "cards_listId_fkey" FOREIGN KEY ("listId") REFERENCES "public"."lists"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -290,7 +294,7 @@ ALTER TABLE "public"."activities" ADD CONSTRAINT "activities_cardId_fkey" FOREIG
 ALTER TABLE "public"."activities" ADD CONSTRAINT "activities_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

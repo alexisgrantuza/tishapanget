@@ -1,75 +1,103 @@
-# Nuxt Minimal Starter
+# Trello-like Task Management Board
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A modern, responsive task management board built with Nuxt 3 and Vue 3, featuring drag-and-drop functionality similar to Trello.
 
-## Setup
+## Features
 
-Make sure to install dependencies:
+- **Multiple Lists**: Create and manage multiple task lists with different colors
+- **Draggable Cards**: Drag and drop cards between lists using vuedraggable
+- **Task Management**: Add, edit, delete, and mark tasks as complete
+- **Responsive Design**: Beautiful dark theme with gradient backgrounds
+- **Real-time Updates**: Instant updates when moving cards between lists
 
-```bash
-# npm
-npm install
+## Getting Started
 
-# pnpm
-pnpm install
+### Prerequisites
 
-# yarn
-yarn install
+- Node.js 18+
+- npm or yarn
 
-# bun
-bun install
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Open your browser and navigate to `http://localhost:3000`
+
+## How to Use
+
+### Adding a New List
+
+1. Click the "+ Add another list" button on the right side
+2. Enter a name for your list
+3. Press Enter or click "Add List"
+
+### Adding Cards to Lists
+
+1. Click "+ Add a card" at the bottom of any list
+2. Type your task description
+3. Press Enter or click "Add Card"
+
+### Managing Cards
+
+- **Complete a task**: Click the checkbox to mark as complete
+- **Edit a card**: Click the pencil icon to edit the card content
+- **Delete a card**: Click the trash icon to remove a card
+- **Move cards**: Drag and drop cards between different lists
+
+### Moving Cards Between Lists
+
+- Simply drag any card from one list and drop it into another list
+- Cards automatically update their position and list association
+
+## Technology Stack
+
+- **Frontend**: Nuxt 3, Vue 3, Composition API
+- **Styling**: CSS3 with custom dark theme
+- **Drag & Drop**: vuedraggable
+- **Icons**: SVG icons for a clean, scalable interface
+
+## Project Structure
+
+```
+app/
+├── components/
+│   ├── TaskList.vue      # Individual list component
+│   └── TaskCard.vue      # Individual card component
+├── pages/
+│   └── index.vue         # Main board page
+└── assets/
+    └── css/
+        └── main.css      # Global styles
 ```
 
-## Development Server
+## Customization
 
-Start the development server on `http://localhost:3000`:
+### Colors
 
-```bash
-# npm
-npm run dev
+You can customize the list colors by modifying the `getRandomColor()` function in `index.vue` or by setting specific colors for each list.
 
-# pnpm
-pnpm dev
+### Styling
 
-# yarn
-yarn dev
+The interface uses CSS custom properties and can be easily themed by modifying the CSS variables in the component files.
 
-# bun
-bun run dev
-```
+## Browser Support
 
-## Production
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
 
-Build the application for production:
+## License
 
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+This project is open source and available under the MIT License.

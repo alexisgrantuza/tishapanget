@@ -146,8 +146,13 @@ function prev() {
     (active.value - 1 + testimonials.value.length) % testimonials.value.length;
 }
 
-function randomRotate() {
-  return Math.floor(Math.random() * 21) - 10;
+// Pre-defined rotation values to ensure consistent SSR/CSR hydration
+const rotationValues = [
+  -7, 2, -3, 5, 1, -5, 3, -2, 4, -1, 6, -4, 7, -6, 8, -8, 9, -9, 10, -10,
+];
+
+function randomRotate(index: number) {
+  return rotationValues[index % rotationValues.length];
 }
 
 const current = computed<Testimonial | undefined>(
@@ -164,7 +169,7 @@ function imageStyle(index: number) {
   const zIndex = isActive ? 40 : testimonials.value.length + 2 - index;
   const scale = isActive ? 1 : 0.95;
   const opacity = isActive ? 1 : 0.7;
-  const rotate = isActive ? 0 : randomRotate();
+  const rotate = isActive ? 0 : randomRotate(index);
   const translateY = isActive ? "0px" : "0px";
   return {
     zIndex: String(zIndex),

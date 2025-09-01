@@ -2,7 +2,7 @@ export default defineNuxtRouteMiddleware((to) => {
   const user = useSupabaseUser();
 
   // Protected routes
-  const protectedRoutes = ["/dashboard", "/boards", "/profile"];
+  const protectedRoutes = ["/dashboard", "/boards", "/profile", "/workspace"];
   const isProtectedRoute = protectedRoutes.some((route) =>
     to.path.startsWith(route)
   );
@@ -17,6 +17,6 @@ export default defineNuxtRouteMiddleware((to) => {
   }
 
   if (isAuthRoute && user.value) {
-    return navigateTo("/dashboard");
+    return navigateTo("/workspace");
   }
 });

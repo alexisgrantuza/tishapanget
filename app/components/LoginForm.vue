@@ -36,7 +36,7 @@ const handleSubmit = async () => {
       title: "Success",
       description: "Logged in successfully!",
     });
-    await navigateTo("/dashboard");
+    await navigateTo("/workspace");
   }
 
   loading.value = false;

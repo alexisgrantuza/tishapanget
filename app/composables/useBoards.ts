@@ -1,13 +1,14 @@
 // composables/useBoards.ts
+import type { Board, BoardData } from "~/types";
 
 export const useBoards = () => {
-  const boards = ref([]);
+  const boards = ref<Board[]>([]);
   const loading = ref(false);
 
-  const createBoard = async (boardData) => {
+  const createBoard = async (boardData: BoardData): Promise<Board> => {
     loading.value = true;
     try {
-      const newBoard = await $fetch("/api/boards", {
+      const newBoard = await $fetch<Board>("/api/boards", {
         method: "POST",
         body: boardData,
       });
@@ -22,10 +23,10 @@ export const useBoards = () => {
     }
   };
 
-  const fetchBoards = async (workspaceId) => {
+  const fetchBoards = async (): Promise<Board[]> => {
     loading.value = true;
     try {
-      const response = await $fetch(`/api/boards?workspaceId=${workspaceId}`);
+      const response = await $fetch<Board[]>("/api/boards");
       boards.value = response;
       return response;
     } catch (error) {

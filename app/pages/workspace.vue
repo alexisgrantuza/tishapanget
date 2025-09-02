@@ -371,20 +371,57 @@
 
               <!-- Boards Grid -->
               <div
+                v-if="loading"
+                class="flex items-center justify-center py-12"
+              >
+                <div class="text-center">
+                  <div
+                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"
+                  ></div>
+                  <p class="text-muted-foreground">Loading boards...</p>
+                </div>
+              </div>
+
+              <div
+                v-else
                 class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               >
+                <!-- No Boards State -->
+                <div
+                  v-if="boards.length === 0"
+                  class="col-span-full text-center py-12"
+                >
+                  <div class="max-w-md mx-auto">
+                    <div class="mb-4 flex justify-center">
+                      <div class="rounded-full bg-muted p-3">
+                        <LayoutDashboard
+                          class="h-8 w-8 text-muted-foreground"
+                        />
+                      </div>
+                    </div>
+                    <h3 class="text-lg font-medium text-foreground mb-2">
+                      No boards yet
+                    </h3>
+                    <p class="text-muted-foreground mb-4">
+                      Create your first board to get started with organizing
+                      your tasks and projects.
+                    </p>
+                  </div>
+                </div>
+
                 <!-- Existing Boards -->
                 <div
                   v-for="board in boards"
                   :key="board.id"
                   class="group cursor-pointer relative"
+                  @click="navigateToBoard(board.id)"
                 >
                   <div
                     class="overflow-hidden rounded-xl shadow-md transition-all group-hover:grayscale-25"
                   >
                     <div
                       class="h-28"
-                      :style="{ background: board.background }"
+                      :style="{ background: board.color }"
                     ></div>
                     <!-- Star icon for favorites -->
                     <div
@@ -410,10 +447,17 @@
                     <h4
                       class="font-medium text-foreground group-hover:text-primary"
                     >
-                      {{ board.title }}
+                      {{ board.name }}
                     </h4>
                     <p class="text-sm text-muted-foreground">
-                      {{ board.lists }} lists • {{ board.cards }} cards
+                      {{ board._count?.lists || 0 }} lists •
+                      {{
+                        board.lists?.reduce(
+                          (total, list) => total + (list.cards?.length || 0),
+                          0
+                        ) || 0
+                      }}
+                      cards
                     </p>
                   </div>
                 </div>
@@ -589,10 +633,19 @@
                         <div class="flex flex-col space-y-2 pt-2">
                           <button
                             @click="createBoard"
-                            :disabled="!boardTitle.trim()"
+                            :disabled="!boardTitle.trim() || loading"
                             class="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
                           >
-                            Create
+                            <div
+                              v-if="loading"
+                              class="flex items-center justify-center"
+                            >
+                              <div
+                                class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+                              ></div>
+                              Creating...
+                            </div>
+                            <span v-else>Create</span>
                           </button>
                           <button
                             @click="openTemplateModal"
@@ -646,13 +699,24 @@ import {
   AlertCircle,
 } from "lucide-vue-next";
 
-// Apply auth middleware to this page
+// Apply auth middleware
 definePageMeta({
   middleware: "auth",
 });
 
 const user = useSupabaseUser();
 const { signOut } = useAuth();
+
+// Import toast for notifications
+import { toast } from "vue-sonner";
+
+// Use the boards composable
+const {
+  boards,
+  loading,
+  createBoard: createBoardAPI,
+  fetchBoards,
+} = useBoards();
 
 // User menu dropdown state
 const isUserMenuOpen = ref(false);
@@ -667,18 +731,6 @@ const selectedBackground = ref(
   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
 );
 const showTitleError = ref(false);
-
-// Sample boards data
-const boards = ref([
-  {
-    id: 1,
-    title: "My Trallo board",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    lists: 3,
-    cards: 12,
-    isFavorite: false,
-  },
-]);
 
 // Background options
 const photoBackgrounds = ref([
@@ -781,39 +833,47 @@ const createBoard = async () => {
   }
 
   try {
-    // Create new board in database
-    const newBoard = await $fetch("/api/boards", {
-      method: "POST",
-      body: {
-        title: boardTitle.value.trim(),
-        background: selectedBackground.value,
-        workspaceId: "your-workspace-id", // You'll need to get this
-        isPrivate: boardVisibility.value === "private",
-      },
-    });
+    // Create board via API
+    const boardData = {
+      title: boardTitle.value.trim(),
+      background: selectedBackground.value,
+      isPrivate: boardVisibility.value === "private",
+    };
 
-    // Add to local state
-    boards.value.push({
-      id: newBoard.id,
-      title: newBoard.name,
-      background: newBoard.color || selectedBackground.value,
-      lists: 0,
-      cards: 0,
-      isFavorite: false,
-    });
-
+    const newBoard = await createBoardAPI(boardData);
     closeCreateBoardDropdown();
-    console.log("Created board:", newBoard);
+
+    // Show success message
+    toast.success("Board created successfully!");
+
+    // Option 1: Navigate to the new board (current behavior)
+    // await navigateTo(`/boards/${newBoard.id}`);
+
+    // Option 2: Stay on workspace page and refresh boards list
+    await fetchBoards();
   } catch (error) {
     console.error("Failed to create board:", error);
-    // Handle error (show notification, etc.)
+    // Show error message to user
+    toast.error("Failed to create board. Please try again.");
   }
 };
 
+const navigateToBoard = (boardId) => {
+  navigateTo(`/boards/${boardId}`);
+};
+
 const openTemplateModal = () => {
-  // This would open a template selection modal
   console.log("Opening template modal...");
 };
+
+// Fetch boards on component mount
+onMounted(async () => {
+  try {
+    await fetchBoards();
+  } catch (error) {
+    console.error("Failed to fetch boards:", error);
+  }
+});
 
 // Close dropdown when clicking outside
 onMounted(() => {
@@ -843,7 +903,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Custom scrollbar for sidebar */
 .overflow-y-auto::-webkit-scrollbar {
   width: 4px;
 }
@@ -861,7 +920,6 @@ onMounted(() => {
   background: hsl(var(--border) / 0.8);
 }
 
-/* Custom styles for modal backdrop */
 .backdrop-blur-sm {
   backdrop-filter: blur(4px);
 }

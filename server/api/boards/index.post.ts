@@ -5,14 +5,24 @@ const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
   try {
+    // Get authenticated user
+    const user = await serverSupabaseUser(event);
+
+    if (!user) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: "Unauthorized - User not authenticated",
+      });
+    }
+
     const body = await readBody(event);
-    const { title, background, workspaceId, isPrivate } = body;
+    const { title, background, isPrivate } = body;
 
     // Validate required fields
-    if (!title || !workspaceId) {
+    if (!title) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Title and workspaceId are required",
+        statusMessage: "Title is required",
       });
     }
 
@@ -20,15 +30,21 @@ export default defineEventHandler(async (event) => {
     const board = await prisma.board.create({
       data: {
         name: title,
-        color: background,
+        color: background || "#0079BF",
         isPrivate: isPrivate || false,
-        ownerId: "user-id-from-auth", // Get from auth context
-        workspaceId: workspaceId,
+        ownerId: user.id,
         status: "ACTIVE",
       },
       include: {
-        owner: true,
-        workspace: true,
+        owner: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+          },
+        },
       },
     });
 

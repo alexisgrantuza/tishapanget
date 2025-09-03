@@ -128,6 +128,7 @@ model List {
   id        String       @id @default(cuid())
   name      String
   position  Float        
+  color     String       @default("#4a5568")
   boardId   String
   status    RecordStatus @default(ACTIVE)
   createdAt DateTime     @default(now())

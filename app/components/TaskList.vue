@@ -1,10 +1,25 @@
 <template>
-  <div class="task-list" :style="{ backgroundColor: list.color }">
-    <div class="list-header">
-      <h3 class="list-title">{{ list.name }}</h3>
-      <div class="list-actions">
-        <button
-          class="action-btn move-btn"
+  <div
+    class="min-w-[280px] max-w-[280px] rounded-xl p-0 flex flex-col shadow-lg overflow-visible group relative"
+    :style="{ backgroundColor: list.color }"
+    :class="{ 'opacity-80': isOptimistic }"
+  >
+    <!-- Simple optimistic indicator -->
+    <div
+      v-if="isOptimistic"
+      class="absolute top-2 right-2 w-3 h-3 bg-transparent rounded-full animate-pulse"
+    ></div>
+    <div class="flex justify-between items-center p-4 relative">
+      <h3 class="text-white text-base font-bold flex-1 drop-shadow-sm">
+        {{ list.name }}
+      </h3>
+      <div
+        class="flex gap-1 opacity-80 transition-opacity group-hover:opacity-100"
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          class="text-white/80 hover:text-white hover:bg-white/15 h-7 w-7 p-0"
           title="Move list"
           @mousedown="onListDragStart"
         >
@@ -12,7 +27,7 @@
             fill="none"
             viewBox="0 0 16 16"
             role="presentation"
-            class="_1reo15vq _18m915vq _syaz1r31 _lcxvglyw _s7n4yfq0 _vc881r31 _1bsbpxbi _4t3ipxbi"
+            class="h-4 w-4"
           >
             <path
               fill="currentcolor"
@@ -27,14 +42,70 @@
               clip-rule="evenodd"
             ></path>
           </svg>
-        </button>
-        <button class="action-btn more-btn" title="More options">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-            />
-          </svg>
-        </button>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="text-white/80 hover:text-white hover:bg-white/15 h-7 w-7 p-0"
+              title="More options"
+            >
+              <MoreVertical class="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" class="w-56">
+            <DropdownMenuLabel>List Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem @click="editListName" class="cursor-pointer">
+              <Edit3 class="mr-2 h-4 w-4" />
+              <span>Edit List Name</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem @click="copyList" class="cursor-pointer">
+              <Copy class="mr-2 h-4 w-4" />
+              <span>Copy List</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem @click="moveAllCards" class="cursor-pointer">
+              <ArrowRight class="mr-2 h-4 w-4" />
+              <span>Move All Cards</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem @click="archiveAllCards" class="cursor-pointer">
+              <Archive class="mr-2 h-4 w-4" />
+              <span>Archive All Cards</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem @click="sortCards" class="cursor-pointer">
+              <ArrowUpDown class="mr-2 h-4 w-4" />
+              <span>Sort Cards</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              @click="archiveList"
+              class="cursor-pointer text-orange-600 focus:text-orange-600"
+            >
+              <Archive class="mr-2 h-4 w-4" />
+              <span>Archive List</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              @click="deleteList"
+              class="cursor-pointer text-red-600 focus:text-red-600"
+            >
+              <Trash2 class="mr-2 h-4 w-4" />
+              <span>Delete List</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
 
@@ -42,11 +113,11 @@
       v-model="localCards"
       group="cards"
       item-key="id"
-      class="cards-container"
+      class="min-h-[10px] flex flex-col gap-2 px-3 pb-2 flex-1"
       :animation="200"
-      ghost-class="card-ghost"
-      chosen-class="card-chosen"
-      drag-class="card-drag"
+      ghost-class="opacity-50 bg-white/10 border-2 border-dashed border-white/40 rotate-1 scale-95 transition-all duration-200"
+      chosen-class="scale-105 shadow-xl z-[1000]"
+      drag-class="opacity-90 rotate-1 scale-105 shadow-2xl z-[1001]"
       @start="onDragStart"
       @end="onDragEnd"
       @change="onCardChange"
@@ -60,100 +131,143 @@
       </template>
     </draggable>
 
-    <div class="add-card-section">
-      <div v-if="!showAddCardForm" class="add-card-buttons">
-        <div class="add-card-button" @click="showAddCardForm = true">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            class="add-icon"
-          >
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-          </svg>
+    <div class="p-2">
+      <div v-if="!showAddCardForm" class="flex gap-2">
+        <Button
+          variant="ghost"
+          class="text-white/90 hover:text-white hover:bg-white/0 justify-start flex-1 h-10"
+          @click="showAddCardForm = true"
+        >
+          <Plus class="mr-2 h-4 w-4 opacity-80" />
           Add a card
-        </div>
+        </Button>
 
-        <!-- Template Card Button -->
-        <button
-          class="template-card-button"
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
+          class="text-white/80 hover:text-white hover:bg-white/0 h-10 w-10 p-0"
           title="Create from template"
           @click="createFromTemplate"
         >
           <svg
-            width="16"
-            height="16"
+            width="24"
+            height="24"
+            role="presentation"
+            focusable="false"
             viewBox="0 0 24 24"
-            fill="currentColor"
-            class="template-icon"
+            xmlns="http://www.w3.org/2000/svg"
           >
             <path
               d="M3 6V5C3 3.89543 3.89543 3 5 3H6C6.55228 3 7 3.44772 7 4C7 4.55228 6.55228 5 6 5H5V6C5 6.55228 4.55228 7 4 7C3.44772 7 3 6.55228 3 6Z"
               fill="currentColor"
-            />
+            ></path>
             <path
               fill-rule="evenodd"
               clip-rule="evenodd"
               d="M6 8C6 6.89543 6.89543 6 8 6H19C20.1046 6 21 6.89543 21 8V18C21 19.1046 20.1046 20 19 20H8C6.89543 20 6 19.1046 6 18V8ZM8 8H19V14H8V8ZM18 18C17.4477 18 17 17.5523 17 17C17 16.4477 17.4477 16 18 16C18.5523 16 19 16.4477 19 17C19 17.5523 18.5523 18 18 18ZM8 17C8 17.5523 8.44772 18 9 18H12C12.5523 18 13 17.5523 13 17C13 16.4477 12.5523 16 12 16H9C8.44772 16 8 16.4477 8 17Z"
               fill="currentColor"
-            />
+            ></path>
             <path
               d="M4 14C3.44772 14 3 14.4477 3 15V16C3 17.1046 3.89543 18 5 18V15C5 14.4477 4.55228 14 4 14Z"
               fill="currentColor"
-            />
+            ></path>
             <path
               d="M3 9C3 8.44772 3.44772 8 4 8C4.55228 8 5 8.44772 5 9V12C5 12.5523 4.55228 13 4 13C3.44772 13 3 12.5523 3 12V9Z"
               fill="currentColor"
-            />
+            ></path>
             <path
               d="M8 4C8 3.44772 8.44772 3 9 3H13C13.5523 3 14 3.44772 14 4C14 4.55228 13.5523 5 13 5H9C8.44772 5 8 4.55228 8 4Z"
               fill="currentColor"
-            />
+            ></path>
             <path
               d="M16 3C15.4477 3 15 3.44772 15 4C15 4.55228 15.4477 5 16 5H19C19 3.89543 18.1046 3 17 3H16Z"
               fill="currentColor"
-            />
+            ></path>
           </svg>
-        </button>
+        </Button>
       </div>
 
-      <div v-else class="add-card-form">
-        <textarea
-          v-model="newCardContent"
-          placeholder="Enter a title for this card..."
-          class="card-content-input"
-          @keydown.ctrl.enter="createCard"
-          @keydown.escape="cancelAddCard"
-          ref="cardContentInput"
-        ></textarea>
-        <div class="form-actions">
-          <button class="add-button" @click="createCard">Add Card</button>
-          <button class="cancel-button" @click="cancelAddCard">Cancel</button>
-        </div>
-      </div>
+      <Card v-else class="bg-gray-800 border-gray-700">
+        <CardContent class="p-3">
+          <Textarea
+            v-model="newCardContent"
+            placeholder="Enter a title for this card..."
+            class="text-white bg-transparent border-gray-600 focus:border-blue-500 min-h-[60px] resize-none mb-3"
+            @keydown.ctrl.enter="createCard"
+            @keydown.escape="cancelAddCard"
+            ref="cardContentInput"
+          />
+          <div class="flex gap-2">
+            <Button
+              @click="createCard"
+              size="sm"
+              class="bg-blue-600 hover:bg-blue-700"
+            >
+              Add Card
+            </Button>
+            <Button
+              @click="cancelAddCard"
+              variant="outline"
+              size="sm"
+              class="border-gray-600 text-gray-300 hover:bg-gray-700"
+            >
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-
-    <div class="list-footer"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, watch, nextTick } from "vue";
 import draggable from "vuedraggable";
 import TaskCard from "./TaskCard.vue";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  MoreVertical,
+  Edit3,
+  Copy,
+  ArrowRight,
+  Archive,
+  ArrowUpDown,
+  Trash2,
+  Plus,
+} from "lucide-vue-next";
+import { toast } from "vue-sonner";
 
 const props = defineProps({
   list: {
     type: Object,
     required: true,
   },
+  isOptimistic: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([
   "update-list",
   "delete-list",
+  "restore-list",
+  "archive-list",
+  "copy-list",
+  "move-all-cards",
+  "archive-all-cards",
+  "sort-cards",
+  "edit-list-name",
   "add-card",
   "add-template-card",
   "update-card",
@@ -188,17 +302,7 @@ const onDragEnd = () => {
 };
 
 const onListDragStart = (event) => {
-  // Emit event to parent to handle list dragging
   emit("list-drag-start", props.list.id, event);
-};
-
-// Method to handle when this list is being dragged from parent draggable
-const handleListDragStart = () => {
-  // Add visual feedback for list dragging
-  const listElement = event?.target?.closest(".task-list");
-  if (listElement) {
-    listElement.classList.add("list-being-dragged");
-  }
 };
 
 const onCardChange = (evt) => {
@@ -223,6 +327,51 @@ const onCardChange = (evt) => {
   }
 };
 
+// Dropdown action methods
+const editListName = () => {
+  emit("edit-list-name", props.list.id);
+};
+
+const copyList = () => {
+  emit("copy-list", props.list.id);
+};
+
+const moveAllCards = () => {
+  emit("move-all-cards", props.list.id);
+};
+
+const archiveAllCards = () => {
+  emit("archive-all-cards", props.list.id);
+};
+
+const sortCards = () => {
+  emit("sort-cards", props.list.id);
+};
+
+const archiveList = () => {
+  if (confirm(`Archive "${props.list.name}" list?`)) {
+    emit("archive-list", props.list.id);
+  }
+};
+
+const deleteList = async () => {
+  // Optimistic: tell parent to remove immediately and keep snapshot to allow restore
+  emit("delete-list", props.list.id, { snapshot: { ...props.list } });
+
+  try {
+    await $fetch("/api/lists", {
+      method: "DELETE",
+      body: { listId: props.list.id },
+    });
+    toast.success("List deleted");
+  } catch (error) {
+    console.error("Failed to delete list:", error);
+    toast.error("Failed to delete list. Restoring...");
+    emit("restore-list", props.list.id);
+  }
+};
+
+// Card creation methods
 const createCard = () => {
   if (newCardContent.value.trim()) {
     emit("add-card", props.list.id, newCardContent.value.trim());
@@ -232,7 +381,6 @@ const createCard = () => {
 };
 
 const createFromTemplate = () => {
-  // Emit event to parent to handle template card creation
   emit("add-template-card", props.list.id);
 };
 
@@ -259,256 +407,8 @@ watch(showAddCardForm, async (newVal) => {
 </script>
 
 <style scoped>
-.task-list {
-  min-width: 280px;
-  max-width: 280px;
-  background: #4a5568;
-  border-radius: 12px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: inherit;
-  position: relative;
-}
-
-.list-title {
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-  flex: 1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.list-actions {
-  display: flex;
-  gap: 4px;
-  opacity: 0.8;
-  transition: opacity 0.2s;
-}
-
-.task-list:hover .list-actions {
+/* Additional custom styles if needed */
+.group:hover .group-hover\:opacity-100 {
   opacity: 1;
-}
-
-.action-btn {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  width: 28px;
-  height: 28px;
-}
-
-.action-btn:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
-}
-
-.move-btn {
-  cursor: grab;
-}
-
-.move-btn:active {
-  cursor: grabbing;
-  transform: scale(0.95);
-}
-
-.cards-container {
-  min-height: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 12px 8px 12px;
-  flex: 1;
-}
-
-.card-ghost {
-  opacity: 0.5;
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 2px dashed rgba(255, 255, 255, 0.4) !important;
-  transform: rotate(2deg) scale(0.98);
-  transition: all 0.2s ease;
-}
-
-.card-chosen {
-  transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-}
-
-.card-drag {
-  opacity: 0.9;
-  transform: rotate(2deg) scale(1.05);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-  z-index: 1001;
-}
-
-.list-being-dragged {
-  opacity: 0.8;
-  z-index: 1001;
-  transition: all 0.2s ease;
-}
-
-.add-card-section {
-  padding: 8px 12px 8px 12px;
-}
-
-.add-card-buttons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.add-card-button {
-  color: rgba(255, 255, 255, 0.9);
-  padding: 6px 12px;
-  cursor: pointer;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  flex: 1;
-  justify-content: flex-start;
-}
-
-.add-card-button:hover {
-  color: white;
-  transform: translateY(-1px);
-}
-
-.add-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.8;
-}
-
-.template-card-button {
-  color: rgba(255, 255, 255, 0.8);
-  padding: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  height: 40px;
-}
-
-.template-card-button:hover {
-  color: white;
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.template-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.8;
-}
-
-.add-card-form {
-  background: var(--color-gray-800);
-  padding: 12px;
-  border-radius: 8px;
-}
-
-.card-content-input {
-  width: 100%;
-  color: white;
-  min-height: 60px;
-  padding: 10px;
-  border: 2px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
-  margin-bottom: 10px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.card-content-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.add-button,
-.cancel-button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.add-button {
-  background: #667eea;
-  color: white;
-}
-
-.add-button:hover {
-  background: #5a67d8;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-}
-
-.cancel-button {
-  background: #e2e8f0;
-  color: #4a5568;
-}
-
-.cancel-button:hover {
-  background: #cbd5e0;
-  transform: translateY(-1px);
-}
-
-.list-footer {
-  height: 8px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .task-list {
-    min-width: 260px;
-    max-width: 260px;
-  }
-
-  .list-title {
-    font-size: 15px;
-  }
-
-  .add-card-button {
-    font-size: 13px;
-  }
 }
 </style>

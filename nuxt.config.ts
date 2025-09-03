@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     "shadcn-nuxt",
     "@nuxtjs/supabase",
   ],
-  css: ["~/assets/css/main.css"],
+  css: ["~/assets/css/main.css", "vue-sonner/style.css"],
 
   vite: {
     plugins: [tailwindcss()],

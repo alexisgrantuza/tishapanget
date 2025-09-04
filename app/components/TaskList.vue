@@ -115,9 +115,9 @@
       item-key="id"
       class="min-h-[10px] flex flex-col gap-2 px-3 pb-2 flex-1"
       :animation="200"
-      ghost-class="opacity-50 bg-white/10 border-2 border-dashed border-white/40 rotate-1 scale-95 transition-all duration-200"
-      chosen-class="scale-105 shadow-xl z-[1000]"
-      drag-class="opacity-90 rotate-1 scale-105 shadow-2xl z-[1001]"
+      ghost-class="sortable-ghost"
+      chosen-class="sortable-chosen"
+      drag-class="sortable-drag"
       @start="onDragStart"
       @end="onDragEnd"
       @change="onCardChange"
@@ -201,7 +201,7 @@
             <Button
               @click="createCard"
               size="sm"
-              class="bg-blue-600 hover:bg-blue-700"
+              class="bg-gray-600 hover:bg-gray-700"
             >
               Add Card
             </Button>
@@ -372,11 +372,14 @@ const deleteList = async () => {
 };
 
 // Card creation methods
-const createCard = () => {
+const createCard = async () => {
   if (newCardContent.value.trim()) {
-    emit("add-card", props.list.id, newCardContent.value.trim());
+    const content = newCardContent.value.trim();
+    // Clear form immediately for better UX
     newCardContent.value = "";
     showAddCardForm.value = false;
+    // Emit the event
+    emit("add-card", props.list.id, content);
   }
 };
 
@@ -401,7 +404,14 @@ const deleteCard = (cardId) => {
 watch(showAddCardForm, async (newVal) => {
   if (newVal) {
     await nextTick();
-    cardContentInput.value?.focus();
+    // Try to focus the textarea element
+    if (cardContentInput.value) {
+      // Check if it's a Vue component instance or DOM element
+      const element = cardContentInput.value.$el || cardContentInput.value;
+      if (element && typeof element.focus === "function") {
+        element.focus();
+      }
+    }
   }
 });
 </script>

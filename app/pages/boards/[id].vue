@@ -184,7 +184,8 @@
               @delete-card="deleteCard"
               @delete-list="deleteList"
               @restore-list="restoreList"
-              @list-drag-start="onListDragStart"
+              @update-list="updateList"
+              @list-drag-start="onTaskListDragStart"
               @drag-start="handleDragStart"
               @drag-end="handleDragEnd"
               @drag-over="handleDragOver"
@@ -252,6 +253,7 @@ import {
   HelpCircle,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
+import { useTasks } from "@/composables/useTasks";
 
 const lists = ref([]);
 const deletedListSnapshots = ref(new Map());
@@ -282,6 +284,11 @@ const isUserMenuOpen = ref(false);
 const userMenuRef = ref(null);
 const user = useSupabaseUser();
 const { signOut } = useAuth();
+const {
+  createTask,
+  updateTask: apiUpdateTask,
+  deleteTask: apiDeleteTask,
+} = useTasks();
 
 const colors = [
   "#8B5A2B",
@@ -316,6 +323,7 @@ const fetchBoard = async () => {
         id: c.id,
         content: c.title || "",
         completed: !!c.isArchived,
+        listId: l.id,
       })),
     }));
   } catch (e) {
@@ -486,36 +494,106 @@ const onListDragEnd = (event) => {
   }
 };
 
+const onTaskListDragStart = (listId, event) => {
+  // Handle drag start from TaskList component
+  console.log("TaskList drag start:", listId);
+};
+
 // Card management functions
-const addCard = (listId, content) => {
+const addCard = async (listId, content) => {
   const list = lists.value.find((l) => l.id === listId);
-  if (list) {
-    const newCard = {
-      id: Date.now().toString(),
-      content: content,
-      listId: listId,
-    };
-    list.cards.push(newCard);
-  }
-};
+  if (!list) return;
 
-const updateCard = (listId, cardId, updatedCard) => {
-  const list = lists.value.find((l) => l.id === listId);
-  if (list) {
-    const cardIndex = list.cards.findIndex((c) => c.id === cardId);
+  // Create optimistic card for immediate UI feedback
+  const tempId = `temp-${Date.now()}`;
+  const optimisticCard = {
+    id: tempId,
+    content: content,
+    completed: false,
+    listId: listId,
+  };
+  list.cards.push(optimisticCard);
+
+  try {
+    // Save to database
+    const created = await createTask(listId, content);
+
+    // Replace optimistic card with real one from database
+    const cardIndex = list.cards.findIndex((c) => c.id === tempId);
     if (cardIndex !== -1) {
-      list.cards[cardIndex] = { ...list.cards[cardIndex], ...updatedCard };
+      list.cards[cardIndex] = {
+        id: created.id,
+        content: created.title || content,
+        completed: false,
+        listId: listId,
+      };
     }
-  }
-};
 
-const deleteCard = (listId, cardId) => {
-  const list = lists.value.find((l) => l.id === listId);
-  if (list) {
-    const cardIndex = list.cards.findIndex((c) => c.id === cardId);
+    toast.success("Card created successfully!");
+  } catch (error) {
+    console.error("Failed to create card:", error);
+
+    // Remove optimistic card on error
+    const cardIndex = list.cards.findIndex((c) => c.id === tempId);
     if (cardIndex !== -1) {
       list.cards.splice(cardIndex, 1);
     }
+
+    toast.error("Failed to create card. Please try again.");
+  }
+};
+
+const updateCard = async (listId, cardId, updatedCard) => {
+  const list = lists.value.find((l) => l.id === listId);
+  if (!list) return;
+
+  const cardIndex = list.cards.findIndex((c) => c.id === cardId);
+  if (cardIndex === -1) return;
+
+  // Store previous state for rollback
+  const previousCard = { ...list.cards[cardIndex] };
+
+  // Apply optimistic update
+  list.cards[cardIndex] = { ...list.cards[cardIndex], ...updatedCard };
+
+  try {
+    // Save to database
+    await apiUpdateTask(cardId, {
+      content: updatedCard.content,
+      completed: updatedCard.completed,
+    });
+  } catch (error) {
+    console.error("Failed to update card:", error);
+
+    // Rollback on error
+    list.cards[cardIndex] = previousCard;
+    toast.error("Failed to update card. Please try again.");
+  }
+};
+
+const deleteCard = async (listId, cardId) => {
+  const list = lists.value.find((l) => l.id === listId);
+  if (!list) return;
+
+  const cardIndex = list.cards.findIndex((c) => c.id === cardId);
+  if (cardIndex === -1) return;
+
+  // Store card for rollback
+  const removedCard = list.cards[cardIndex];
+
+  // Remove from UI immediately
+  list.cards.splice(cardIndex, 1);
+
+  try {
+    // Delete from database
+    await apiDeleteTask(cardId);
+    toast.success("Card deleted successfully!");
+  } catch (error) {
+    console.error("Failed to delete card:", error);
+
+    // Rollback on error
+    list.cards.splice(cardIndex, 0, removedCard);
+    toast.error("Failed to delete card. Please try again.");
   }
 };
 
@@ -525,6 +603,12 @@ const addTemplateCard = (listId) => {
 };
 
 // List management functions
+const updateList = (listId, updatedData) => {
+  const listIndex = lists.value.findIndex((l) => l.id === listId);
+  if (listIndex !== -1) {
+    lists.value[listIndex] = { ...lists.value[listIndex], ...updatedData };
+  }
+};
 const deleteList = (listId, payload) => {
   const listIndex = lists.value.findIndex((l) => l.id === listId);
   if (listIndex === -1) return;

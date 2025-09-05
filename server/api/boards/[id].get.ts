@@ -39,6 +39,7 @@ export default defineEventHandler(async (event) => {
           include: {
             cards: {
               where: { isArchived: false },
+              orderBy: { position: "asc" },
             },
           },
           orderBy: { position: "asc" },

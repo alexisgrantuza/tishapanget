@@ -34,6 +34,13 @@ export default defineEventHandler(async (event) => {
         isPrivate: isPrivate || false,
         ownerId: user.id,
         status: "ACTIVE",
+        // Add the creator as a board member with OWNER role
+        members: {
+          create: {
+            userId: user.id,
+            role: "OWNER",
+          },
+        },
       },
       include: {
         owner: {

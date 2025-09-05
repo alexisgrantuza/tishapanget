@@ -1,12 +1,8 @@
 <template>
   <div class="min-h-screen" :style="backgroundStyle">
     <!-- Header -->
-    <header
-      class="sticky top-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-    >
-      <div
-        class="container mx-auto flex h-16 items-center justify-between px-4"
-      >
+    <header class="sticky top-0 z-50 border-b border-border/40 bg-black">
+      <div class="mx-auto flex h-16 items-center justify-between px-4">
         <!-- Logo -->
         <div class="flex items-center space-x-4">
           <div class="flex items-center space-x-3">
@@ -24,10 +20,10 @@
               </div>
             </div>
             <div>
-              <h1 class="text-xl font-bold tracking-tight text-foreground">
+              <h1 class="text-xl font-bold tracking-tight text-white">
                 Trallo
               </h1>
-              <p class="text-xs text-muted-foreground">Workspace</p>
+              <p class="text-xs text-gray-400">Workspace</p>
             </div>
           </div>
         </div>
@@ -37,26 +33,86 @@
           <!-- Search -->
           <div class="relative hidden md:block">
             <Search
-              class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
             />
             <input
               type="text"
               placeholder="Search boards, cards, members..."
-              class="h-10 w-80 rounded-lg border border-input bg-background/50 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              class="h-10 w-80 rounded-lg border border-gray-600 bg-gray-800 pl-10 pr-4 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
             />
           </div>
 
           <!-- Create Button -->
           <button
-            class="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 cursor-pointer"
+            class="inline-flex h-10 items-center justify-center rounded-lg bg-gray-800 px-6 text-sm font-medium text-white shadow transition-colors hover:bg-gray-700 cursor-pointer"
           >
             <Plus class="mr-2 h-4 w-4" />
             Create
           </button>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-white hover:bg-gray-800 hover:text-white"
+          >
+            <Rocket class="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-white hover:bg-gray-800 hover:text-white"
+          >
+            <Zap class="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-white hover:bg-gray-800 hover:text-white"
+          >
+            <Filter class="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-white hover:bg-gray-800 hover:text-white"
+          >
+            <Users class="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-white hover:bg-gray-800 hover:text-white"
+          >
+            <Star class="w-4 h-4" />
+          </Button>
+
+          <!-- Share Button -->
+          <Button
+            @click="openShareModal"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2"
+          >
+            <UserPlus class="w-4 h-4 mr-2" />
+            Share
+          </Button>
+
+          <!-- Menu Button -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-white hover:bg-gray-800 hover:text-white"
+          >
+            <MoreHorizontal class="w-4 h-4" />
+          </Button>
 
           <!-- Notifications -->
           <button
-            class="relative flex h-10 w-10 items-center justify-center rounded-lg border border-input bg-background/50 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            class="relative flex h-10 w-10 items-center justify-center rounded-lg border border-gray-600 bg-gray-800 text-gray-300 transition-colors hover:bg-gray-700 hover:text-white cursor-pointer"
           >
             <Bell class="h-4 w-4" />
             <div
@@ -87,18 +143,18 @@
             >
               <div
                 v-if="isUserMenuOpen"
-                class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-border/50 rounded-lg border border-border/50 bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none backdrop-blur supports-[backdrop-filter]:bg-card/95"
+                class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-600 rounded-lg border border-gray-600 bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
               >
                 <!-- User Info Section -->
                 <div class="px-4 py-3">
-                  <p class="text-sm font-medium text-foreground truncate">
+                  <p class="text-sm font-medium text-white truncate">
                     {{
                       user?.user_metadata?.full_name ||
                       user?.user_metadata?.first_name ||
                       "User"
                     }}
                   </p>
-                  <p class="text-xs text-muted-foreground truncate">
+                  <p class="text-xs text-gray-400 truncate">
                     {{ user?.email || "user@example.com" }}
                   </p>
                 </div>
@@ -108,7 +164,7 @@
                   <NuxtLink
                     to="#"
                     @click="closeUserMenu"
-                    class="flex items-center px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="flex items-center px-4 py-2 text-sm text-white hover:bg-gray-700 hover:text-white transition-colors"
                   >
                     <User class="mr-3 h-4 w-4" />
                     Your Profile
@@ -117,7 +173,7 @@
                   <NuxtLink
                     to="#"
                     @click="closeUserMenu"
-                    class="flex items-center px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="flex items-center px-4 py-2 text-sm text-white hover:bg-gray-700 hover:text-white transition-colors"
                   >
                     <Settings class="mr-3 h-4 w-4" />
                     Account Settings
@@ -126,7 +182,7 @@
                   <NuxtLink
                     to="#"
                     @click="closeUserMenu"
-                    class="flex items-center px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="flex items-center px-4 py-2 text-sm text-white hover:bg-gray-700 hover:text-white transition-colors"
                   >
                     <CreditCard class="mr-3 h-4 w-4" />
                     Billing
@@ -135,7 +191,7 @@
                   <NuxtLink
                     to="#"
                     @click="closeUserMenu"
-                    class="flex items-center px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="flex items-center px-4 py-2 text-sm text-white hover:bg-gray-700 hover:text-white transition-colors"
                   >
                     <HelpCircle class="mr-3 h-4 w-4" />
                     Help & Support
@@ -146,7 +202,7 @@
                 <div class="py-1">
                   <button
                     @click="handleSignOut"
-                    class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300 transition-colors cursor-pointer"
+                    class="flex w-full items-center px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors cursor-pointer"
                   >
                     <LogOut class="mr-3 h-4 w-4" />
                     Sign Out
@@ -235,6 +291,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Share Board Modal -->
+    <ShareBoardModal
+      v-if="board?.id"
+      :is-open="isShareModalOpen"
+      :board-id="board.id"
+      @close="closeShareModal"
+    />
   </div>
 </template>
 
@@ -251,9 +315,19 @@ import {
   User,
   LogOut,
   HelpCircle,
+  Star,
+  Users,
+  Filter,
+  Rocket,
+  Zap,
+  MoreHorizontal,
+  UserPlus,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { useTasks } from "@/composables/useTasks";
+import { useLists } from "@/composables/useLists";
+import { Button } from "@/components/ui/button";
+import ShareBoardModal from "@/components/ShareBoardModal.vue";
 
 const lists = ref([]);
 const deletedListSnapshots = ref(new Map());
@@ -266,6 +340,7 @@ const draggedCard = ref(null);
 const dragOverList = ref(null);
 const dragOverIndex = ref(null);
 const listNameInput = ref(null);
+const isShareModalOpen = ref(false);
 const backgroundStyle = computed(() => {
   const color =
     board.value?.color || "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
@@ -288,7 +363,10 @@ const {
   createTask,
   updateTask: apiUpdateTask,
   deleteTask: apiDeleteTask,
+  reorderTasks,
 } = useTasks();
+
+const { reorderLists } = useLists();
 
 const colors = [
   "#8B5A2B",
@@ -319,11 +397,13 @@ const fetchBoard = async () => {
       id: l.id,
       name: l.name,
       color: l.color || "#1A202C",
+      position: l.position || 0,
       cards: (l.cards || []).map((c) => ({
         id: c.id,
         content: c.title || "",
         completed: !!c.isArchived,
         listId: l.id,
+        position: c.position || 0,
       })),
     }));
   } catch (e) {
@@ -347,6 +427,7 @@ const createList = async () => {
     name: newListName.value.trim(),
     color: color,
     cards: [],
+    position: lists.value.length + 1, // Set position based on current length
     isOptimistic: true,
   };
 
@@ -371,10 +452,13 @@ const createList = async () => {
         id: created.id,
         name: created.name,
         color: created.color || color,
+        position: created.position || lists.value.length,
         cards: (created.cards || []).map((c) => ({
           id: c.id,
           content: c.title || "",
           completed: !!c.isArchived,
+          listId: created.id,
+          position: c.position || 0,
         })),
         isOptimistic: false,
       };
@@ -481,7 +565,7 @@ const onListDragStart = (event) => {
   });
 };
 
-const onListDragEnd = (event) => {
+const onListDragEnd = async (event) => {
   // Remove dragging classes
   const listElement = event.item;
   if (listElement) {
@@ -491,6 +575,19 @@ const onListDragEnd = (event) => {
       "shadow-2xl",
       "z-50"
     );
+  }
+
+  // Save list positions to database
+  try {
+    const listPositions = lists.value.map((list, index) => ({
+      listId: list.id,
+      position: index + 1, // Position starts from 1
+    }));
+
+    await reorderLists(listPositions);
+  } catch (error) {
+    console.error("Failed to save list positions:", error);
+    toast.error("Failed to save list order. Please try again.");
   }
 };
 
@@ -511,6 +608,7 @@ const addCard = async (listId, content) => {
     content: content,
     completed: false,
     listId: listId,
+    position: list.cards.length + 1, // Set position based on current length
   };
   list.cards.push(optimisticCard);
 
@@ -526,6 +624,7 @@ const addCard = async (listId, content) => {
         content: created.title || content,
         completed: false,
         listId: listId,
+        position: created.position || list.cards.length,
       };
     }
 
@@ -598,15 +697,37 @@ const deleteCard = async (listId, cardId) => {
 };
 
 const addTemplateCard = (listId) => {
-  // TODO: Implement template card creation
   console.log("Adding template card to list:", listId);
 };
 
 // List management functions
-const updateList = (listId, updatedData) => {
+const updateList = async (listId, updatedData) => {
   const listIndex = lists.value.findIndex((l) => l.id === listId);
   if (listIndex !== -1) {
+    // Store previous state for rollback
+    const previousList = { ...lists.value[listIndex] };
+
+    // Apply optimistic update
     lists.value[listIndex] = { ...lists.value[listIndex], ...updatedData };
+
+    // If cards were updated, save their positions to database
+    if (updatedData.cards) {
+      try {
+        const cardPositions = updatedData.cards.map((card, index) => ({
+          cardId: card.id,
+          position: index + 1, // Position starts from 1
+          listId: listId,
+        }));
+
+        await reorderTasks(cardPositions);
+      } catch (error) {
+        console.error("Failed to save card positions:", error);
+
+        // Rollback on error
+        lists.value[listIndex] = previousList;
+        toast.error("Failed to save card positions. Please try again.");
+      }
+    }
   }
 };
 const deleteList = (listId, payload) => {
@@ -637,6 +758,14 @@ const restoreList = (listId) => {
 const handleSignOut = async () => {
   closeUserMenu();
   await signOut();
+};
+
+const openShareModal = () => {
+  isShareModalOpen.value = true;
+};
+
+const closeShareModal = () => {
+  isShareModalOpen.value = false;
 };
 
 // Watch for when form becomes visible to focus input

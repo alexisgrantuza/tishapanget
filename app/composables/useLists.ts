@@ -109,6 +109,21 @@ export const useLists = () => {
     }
   };
 
+  const reorderLists = async (
+    listPositions: Array<{ listId: string; position: number }>
+  ) => {
+    loading.value = true;
+    try {
+      const res = await $fetch("/api/lists/reorder", {
+        method: "POST",
+        body: { listPositions },
+      });
+      return res;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     loading: readonly(loading),
     deleteList,
@@ -118,5 +133,6 @@ export const useLists = () => {
     archiveAllCards,
     sortCards,
     editListName,
+    reorderLists,
   };
 };

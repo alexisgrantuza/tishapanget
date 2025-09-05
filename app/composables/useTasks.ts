@@ -44,5 +44,26 @@ export const useTasks = () => {
     }
   };
 
-  return { loading: readonly(loading), createTask, updateTask, deleteTask };
+  const reorderTasks = async (
+    cardPositions: Array<{ cardId: string; position: number; listId?: string }>
+  ) => {
+    loading.value = true;
+    try {
+      const res = await $fetch("/api/tasks/reorder", {
+        method: "POST",
+        body: { cardPositions },
+      });
+      return res;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  return {
+    loading: readonly(loading),
+    createTask,
+    updateTask,
+    deleteTask,
+    reorderTasks,
+  };
 };

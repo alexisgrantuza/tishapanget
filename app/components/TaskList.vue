@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-w-[280px] max-w-[280px] rounded-xl p-0 flex flex-col shadow-lg overflow-visible group relative"
+    class="min-w-[280px] max-w-[280px] rounded-xl p-0 flex flex-col shadow-lg overflow-visible relative"
     :style="{ backgroundColor: list.color }"
     :class="{ 'opacity-80': isOptimistic }"
   >
@@ -13,9 +13,7 @@
       <h3 class="text-white text-base font-bold flex-1 drop-shadow-sm">
         {{ list.name }}
       </h3>
-      <div
-        class="flex gap-1 opacity-80 transition-opacity group-hover:opacity-100"
-      >
+      <div class="flex gap-1 opacity-80 transition-opacity hover:opacity-100">
         <Button
           variant="ghost"
           size="sm"
@@ -418,7 +416,4 @@ watch(showAddCardForm, async (newVal) => {
 
 <style scoped>
 /* Additional custom styles if needed */
-.group:hover .group-hover\:opacity-100 {
-  opacity: 1;
-}
 </style>

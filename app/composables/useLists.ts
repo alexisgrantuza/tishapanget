@@ -2,6 +2,25 @@
 export const useLists = () => {
   const loading = ref(false);
 
+  const updateList = async (
+    listId: string,
+    data: Partial<{ name: string; color: string; position: number }>
+  ): Promise<any> => {
+    loading.value = true;
+    try {
+      const updated = await $fetch(`/api/lists/${listId}`, {
+        method: "PATCH",
+        body: data,
+      });
+      return updated;
+    } catch (error) {
+      console.error("Failed to update list:", error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const deleteList = async (listId: string): Promise<boolean> => {
     loading.value = true;
     try {
@@ -98,8 +117,7 @@ export const useLists = () => {
   ): Promise<boolean> => {
     loading.value = true;
     try {
-      // TODO: Implement edit list name API endpoint
-      console.log("Editing list name:", listId, newName);
+      await updateList(listId, { name: newName });
       return true;
     } catch (error) {
       console.error("Failed to edit list name:", error);
@@ -126,6 +144,7 @@ export const useLists = () => {
 
   return {
     loading: readonly(loading),
+    updateList,
     deleteList,
     archiveList,
     copyList,

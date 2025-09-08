@@ -401,7 +401,7 @@ const fetchBoard = async () => {
       cards: (l.cards || []).map((c) => ({
         id: c.id,
         content: c.title || "",
-        completed: !!c.isArchived,
+        completed: !!c.completed, // <-- Change this from c.isArchived to c.completed
         listId: l.id,
         position: c.position || 0,
       })),
@@ -700,7 +700,6 @@ const addTemplateCard = (listId) => {
   console.log("Adding template card to list:", listId);
 };
 
-// List management functions
 const updateList = async (listId, updatedData) => {
   const listIndex = lists.value.findIndex((l) => l.id === listId);
   if (listIndex !== -1) {
@@ -709,6 +708,12 @@ const updateList = async (listId, updatedData) => {
 
     // Apply optimistic update
     lists.value[listIndex] = { ...lists.value[listIndex], ...updatedData };
+
+    // If only name is being updated, no need to save card positions
+    if (updatedData.name && !updatedData.cards) {
+      // Name update is handled directly in TaskList component
+      return;
+    }
 
     // If cards were updated, save their positions to database
     if (updatedData.cards) {
@@ -730,6 +735,7 @@ const updateList = async (listId, updatedData) => {
     }
   }
 };
+
 const deleteList = (listId, payload) => {
   const listIndex = lists.value.findIndex((l) => l.id === listId);
   if (listIndex === -1) return;

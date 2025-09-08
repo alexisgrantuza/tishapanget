@@ -47,6 +47,28 @@
       >
         <button
           class="edit-btn bg-transparent border-none text-white/60 hover:text-blue-400 hover:bg-blue-400/10 cursor-pointer p-1 rounded transition-all duration-200"
+          @click="archiveCard"
+          title="Archive card"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-archive-icon lucide-archive"
+          >
+            <rect width="20" height="5" x="2" y="3" rx="1" />
+            <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+            <path d="M10 12h4" />
+          </svg>
+        </button>
+        <button
+          class="edit-btn bg-transparent border-none text-white/60 hover:text-blue-400 hover:bg-blue-400/10 cursor-pointer p-1 rounded transition-all duration-200"
           @click="startEdit"
           title="Edit card"
         >
@@ -105,7 +127,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update", "delete"]);
+const emit = defineEmits(["update", "delete", "archive"]);
 
 const isEditing = ref(false);
 const editContent = ref("");
@@ -132,11 +154,13 @@ const cancelEdit = () => {
   editContent.value = props.card.content;
 };
 
-const deleteCard = () => {
-  if (confirm("Are you sure you want to delete this card?")) {
+const archiveCard = () => {
+  if (confirm("Are you sure you want to archive this card?")) {
     emit("delete");
   }
 };
+
+
 
 // Watch for when edit mode becomes active to focus input
 watch(isEditing, async (newVal) => {

@@ -149,6 +149,7 @@ model Card {
   listId      String
   creatorId   String
   priority    CardPriority? 
+  completed   Boolean       @default(false)
   dueDate     DateTime?
   isArchived  Boolean       @default(false)
   createdAt   DateTime      @default(now())

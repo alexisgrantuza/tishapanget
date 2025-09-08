@@ -1,6 +1,6 @@
 <template>
   <Dialog :open="isOpen" @update:open="closeModal">
-    <DialogContent class="max-w-xl">
+    <DialogContent class="max-w-xl bg-black text-white border-none">
       <DialogHeader>
         <DialogTitle>Share board</DialogTitle>
         <DialogDescription>
@@ -32,6 +32,7 @@
               @click="inviteMember"
               :disabled="!inviteEmail.trim() || isInviting"
               variant="secondary"
+              class="cursor-pointer"
             >
               {{ isInviting ? "Sharing..." : "Share" }}
             </Button>
@@ -47,7 +48,7 @@
           <Button
             @click="createShareLink"
             variant="link"
-            class="p-0 h-auto text-muted-foreground hover:text-foreground text-sm"
+            class="p-0 h-auto text-muted-background hover:text-background text-sm"
           >
             Create link
           </Button>
@@ -56,7 +57,7 @@
         <!-- Tabs -->
         <Tabs v-model="activeTab" class="w-full">
           <TabsList class="grid w-full grid-cols-2">
-            <TabsTrigger value="members" class="relative">
+            <TabsTrigger value="members" class="relative cursor-pointer">
               Board members
               <Badge
                 v-if="boardMembers.length > 0"
@@ -69,7 +70,7 @@
             <TabsTrigger
               v-if="canViewRequests"
               value="requests"
-              class="relative"
+              class="relative cursor-pointer"
             >
               Join requests
               <Badge

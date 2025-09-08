@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
       priority,
       dueDate,
       isArchived,
+      completed,
       listId,
       position,
     } = body || {};
@@ -60,6 +61,7 @@ export default defineEventHandler(async (event) => {
             ? null
             : undefined,
         isArchived: typeof isArchived === "boolean" ? isArchived : undefined,
+        completed: typeof completed === "boolean" ? completed : undefined,
         listId: listId || undefined,
         position: typeof position === "number" ? position : undefined,
       },

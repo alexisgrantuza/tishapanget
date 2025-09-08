@@ -23,7 +23,7 @@ export const useTasks = () => {
       const payload: Record<string, any> = {};
       if (typeof data.content === "string") payload.title = data.content;
       if (typeof data.completed === "boolean")
-        payload.isArchived = data.completed;
+        payload.completed = data.completed;
       const updated = await $fetch(`/api/tasks/${id}`, {
         method: "PATCH",
         body: payload,

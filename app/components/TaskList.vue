@@ -10,9 +10,28 @@
       class="absolute top-2 right-2 w-3 h-3 bg-transparent rounded-full animate-pulse"
     ></div>
     <div class="flex justify-between items-center p-4 relative">
-      <h3 class="text-white text-base font-bold flex-1 drop-shadow-sm">
-        {{ list.name }}
-      </h3>
+      <!-- Editable List Title -->
+      <div class="flex-1 mr-2">
+        <h3 
+          v-if="!isEditingTitle"
+          class="text-white text-base font-bold cursor-pointer rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+          @click="startEditingTitle"
+          :title="'Click to edit list name'"
+        >
+          {{ list.name }}
+        </h3>
+        <input
+          v-else
+          ref="titleInput"
+          v-model="editingTitleValue"
+          class="text-white text-base font-bold bg-white/20 border-2 border-white/40 rounded px-2 py-1 -mx-2 -my-1 w-full focus:outline-none "
+          @blur="saveTitle"
+          @keyup.enter="saveTitle"
+          @keyup.escape="cancelEditTitle"
+          @click.stop
+        />
+      </div>
+
       <div class="flex gap-1 opacity-80 transition-opacity hover:opacity-100">
         <Button
           variant="ghost"
@@ -58,7 +77,7 @@
             <DropdownMenuLabel>List Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem @click="editListName" class="cursor-pointer">
+            <DropdownMenuItem @click="startEditingTitle" class="cursor-pointer">
               <Edit3 class="mr-2 h-4 w-4" />
               <span>Edit List Name</span>
             </DropdownMenuItem>
@@ -279,6 +298,11 @@ const newCardContent = ref("");
 const cardContentInput = ref(null);
 const isDragging = ref(false);
 
+// Title editing state
+const isEditingTitle = ref(false);
+const editingTitleValue = ref("");
+const titleInput = ref(null);
+
 // Watch for external changes to the list cards and update local state
 watch(
   () => props.list.cards,
@@ -325,9 +349,52 @@ const onCardChange = (evt) => {
   }
 };
 
+// Title editing methods
+const startEditingTitle = async () => {
+  isEditingTitle.value = true;
+  editingTitleValue.value = props.list.name;
+  await nextTick();
+  if (titleInput.value) {
+    titleInput.value.focus();
+    titleInput.value.select();
+  }
+};
+
+const saveTitle = async () => {
+  if (!editingTitleValue.value.trim()) {
+    cancelEditTitle();
+    return;
+  }
+
+  const newName = editingTitleValue.value.trim();
+  if (newName !== props.list.name) {
+    try {
+      // Call the API to update the list name
+      await $fetch(`/api/lists/${props.list.id}`, {
+        method: "PATCH",
+        body: { name: newName },
+      });
+      
+      // Emit to parent to update the list
+      emit("update-list", props.list.id, { name: newName });
+      toast.success("List name updated successfully!");
+    } catch (error) {
+      console.error("Failed to update list name:", error);
+      toast.error("Failed to update list name. Please try again.");
+    }
+  }
+  
+  isEditingTitle.value = false;
+};
+
+const cancelEditTitle = () => {
+  isEditingTitle.value = false;
+  editingTitleValue.value = props.list.name;
+};
+
 // Dropdown action methods
 const editListName = () => {
-  emit("edit-list-name", props.list.id);
+  startEditingTitle();
 };
 
 const copyList = () => {
